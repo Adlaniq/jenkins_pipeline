@@ -1,27 +1,55 @@
 pipeline {
-    agent none
+    agent any
+
     stages {
-        stage('Non-Parallel Stage') {
+        stage('Git-Checkout') {
             steps {
-                echo 'This stage will be executed first'
+                echo "Checking out from Git Repo";
+                git 'https://github.com/Adlaniq/jenkins_pipeline.git'
             }
         }
-        stage('Run Tests') {
-            parallel {
-                stage('Test On Windows') {
-                    agent {
-                        label "Windows_Node"
-                    }
-                    steps {
-                        echo "Task1 on Agent"
-                    }
-                }
-                stage('Test On Master') {
-                    steps {
-                        echo "Task1 on Master"
-                    }
-                }
+        stage('Build') {
+            steps {
+                echo "Building the checked-out project!";
+                bat 'Build.bat'
             }
+        }
+        stage('Unit-Test') {
+            steps {
+                echo "Running JUnit Tests";
+                bat 'Unit.bat'
+            }
+        }
+        stage('Quality-Gate') {
+            steps {
+                echo "Verifying Quality Gates";
+                bat 'Quality.bat'
+            }
+        }
+        stage('Deploy') {
+            steps {
+                echo "Deploying to Stage environment for more tests";
+                bat 'Deploy.bat'
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'This will always run'
+        }
+        success {
+            echo 'This will run only if successful'
+        }
+        failure {
+            echo 'This will run only if failed'
+        }
+        unstable {
+            echo 'This will run only if the run was marked unstable'
+        }
+        changed {
+            echo 'This will run only if the state of the Pipeline has changed'
+            echo 'For example, if the Pipeline was previously failing but is now successful'
         }
     }
 }
